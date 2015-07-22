@@ -19,7 +19,10 @@
 import kerberos
 import getopt
 import sys
-# import httplib
+try:
+    import httplib
+except ImportError as ex:
+    import http.client as httplib
 import socket
 import ssl
 
@@ -161,112 +164,112 @@ def testGSSAPI(service):
     rs = kerberos.authGSSServerClean(vs);
     print("Status for authGSSServerClean = %s" % statusText(rs))
 
-# def testHTTP(host, port, use_ssl, service):
+def testHTTP(host, port, use_ssl, service):
 
-    # class HTTPSConnection_SSLv3(httplib.HTTPSConnection):
-        # "This class allows communication via SSL."
+    class HTTPSConnection_SSLv3(httplib.HTTPSConnection):
+        "This class allows communication via SSL."
 
-        # def connect(self):
-            # "Connect to a host on a given (SSL) port."
+        def connect(self):
+            "Connect to a host on a given (SSL) port."
 
-            # sock = socket.create_connection((self.host, self.port), self.timeout)
-            # self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_SSLv3)
+            sock = socket.create_connection((self.host, self.port), self.timeout)
+            self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_SSLv3)
 
-    # def sendRequest(host, port, ssl, method, uri, headers):
-        # response = None
-        # if use_ssl:
-            # http = HTTPSConnection_SSLv3(host, port)
-        # else:
-            # http = httplib.HTTPConnection(host, port)
-        # try:
-            # http.request(method, uri, "", headers)
-            # response = http.getresponse()
-        # finally:
-            # http.close()
+    def sendRequest(host, port, ssl, method, uri, headers):
+        response = None
+        if use_ssl:
+            http = HTTPSConnection_SSLv3(host, port)
+        else:
+            http = httplib.HTTPConnection(host, port)
+        try:
+            http.request(method, uri, "", headers)
+            response = http.getresponse()
+        finally:
+            http.close()
         
-        # return response
+        return response
 
-    # # Initial request without auth header
-    # uri = "/principals/"
-    # response = sendRequest(host, port, use_ssl, "OPTIONS", uri, {})
+    # Initial request without auth header
+    uri = "/principals/"
+    response = sendRequest(host, port, use_ssl, "OPTIONS", uri, {})
     
-    # if response is None:
-        # print("Initial HTTP request to server failed")
-        # return
+    if response is None:
+        print("Initial HTTP request to server failed")
+        return
     
-    # if response.status != 401:
-        # print("Initial HTTP request did not result in a 401 response")
-        # return
+    if response.status != 401:
+        print("Initial HTTP request did not result in a 401 response")
+        return
     
-    # hdrs = response.msg.getheaders("www-authenticate")
-    # if (hdrs is None) or (len(hdrs) == 0):
-        # print("No www-authenticate header in initial HTTP response.")
-    # for hdr in hdrs:
-        # hdr = hdr.strip()
-        # splits = hdr.split(' ', 1)
-        # if (len(splits) != 1) or (splits[0].lower() != "negotiate"):
-            # continue
-        # else:
-            # break
-    # else:
-        # print("No www-authenticate header with negotiate in initial HTTP response.")
-        # return        
+    hdrs = response.msg.getheaders("www-authenticate")
+    if (hdrs is None) or (len(hdrs) == 0):
+        print("No www-authenticate header in initial HTTP response.")
+    for hdr in hdrs:
+        hdr = hdr.strip()
+        splits = hdr.split(' ', 1)
+        if (len(splits) != 1) or (splits[0].lower() != "negotiate"):
+            continue
+        else:
+            break
+    else:
+        print("No www-authenticate header with negotiate in initial HTTP response.")
+        return        
 
-    # try:
-        # rc, vc = kerberos.authGSSClientInit(service=service);
-    # except kerberos.GSSError as e:
-        # print("Could not initialize GSSAPI: %s/%s" % (e[0][0], e[1][0]))
-        # return
+    try:
+        rc, vc = kerberos.authGSSClientInit(service=service);
+    except kerberos.GSSError as e:
+        print("Could not initialize GSSAPI: %s/%s" % (e[0][0], e[1][0]))
+        return
 
-    # try:
-        # kerberos.authGSSClientStep(vc, "");
-    # except kerberos.GSSError as e:
-        # print("Could not do GSSAPI step with continue: %s/%s" % (e[0][0], e[1][0]))
-        # return
+    try:
+        kerberos.authGSSClientStep(vc, "");
+    except kerberos.GSSError as e:
+        print("Could not do GSSAPI step with continue: %s/%s" % (e[0][0], e[1][0]))
+        return
 
-    # hdrs = {}
-    # hdrs["Authorization"] = "negotiate %s" % kerberos.authGSSClientResponse(vc)    
+    hdrs = {}
+    hdrs["Authorization"] = "negotiate %s" % kerberos.authGSSClientResponse(vc)    
 
-    # # Second request with auth header
-    # response = sendRequest(host, port, use_ssl, "OPTIONS", uri, hdrs)
+    # Second request with auth header
+    response = sendRequest(host, port, use_ssl, "OPTIONS", uri, hdrs)
     
-    # if response is None:
-        # print("Second HTTP request to server failed")
-        # return
+    if response is None:
+        print("Second HTTP request to server failed")
+        return
     
-    # if response.status/100 != 2:
-        # print("Second HTTP request did not result in a 2xx response: %d" % (response.status,))
-        # return
+    if response.status/100 != 2:
+        print("Second HTTP request did not result in a 2xx response: %d" % (response.status,))
+        return
     
-    # hdrs = response.msg.getheaders("www-authenticate")
-    # if (hdrs is None) or (len(hdrs) == 0):
-        # print("No www-authenticate header in second HTTP response.")
-        # return
-    # for hdr in hdrs:
-        # hdr = hdr.strip()
-        # splits = hdr.split(' ', 1)
-        # if (len(splits) != 2) or (splits[0].lower() != "negotiate"):
-            # continue
-        # else:
-            # break
-    # else:
-        # print("No www-authenticate header with negotiate in second HTTP response.")
-        # return        
+    hdrs = response.msg.getheaders("www-authenticate")
+    if (hdrs is None) or (len(hdrs) == 0):
+        print("No www-authenticate header in second HTTP response.")
+        return
+    for hdr in hdrs:
+        hdr = hdr.strip()
+        splits = hdr.split(' ', 1)
+        if (len(splits) != 2) or (splits[0].lower() != "negotiate"):
+            continue
+        else:
+            break
+    else:
+        print("No www-authenticate header with negotiate in second HTTP response.")
+        return        
 
-    # try:
-        # kerberos.authGSSClientStep(vc, splits[1])
-    # except kerberos.GSSError as e:
-        # print("Could not verify server www-authenticate header in second HTTP response: %s/%s" % (e[0][0], e[1][0]))
-        # return
+    try:
+        kerberos.authGSSClientStep(vc, splits[1])
+    except kerberos.GSSError as e:
+        print("Could not verify server www-authenticate header in second HTTP response: %s/%s" % (e[0][0], e[1][0]))
+        return
     
-    # try:
-        # rc = kerberos.authGSSClientClean(vc);
-    # except kerberos.GSSError as e:
-        # print("Could not clean-up GSSAPI: %s/%s" % (e[0][0], e[1][0]))
-        # return
+    try:
+        rc = kerberos.authGSSClientClean(vc);
+    except kerberos.GSSError as e:
+        print("Could not clean-up GSSAPI: %s/%s" % (e[0][0], e[1][0]))
+        return
 
-    # print("Authenticated successfully")
-    # return
+    print("Authenticated successfully")
+    return
 
 if __name__=='__main__':
     main()
