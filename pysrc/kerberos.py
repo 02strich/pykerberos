@@ -118,15 +118,6 @@ def authGSSClientInit(service, principal=None, gssflags=GSS_C_MUTUAL_FLAG|GSS_C_
         context is an opaque value that will need to be passed to subsequent functions.
     """
 
-def authGSSClientClean(context):
-    """
-    Destroys the context for GSSAPI client-side authentication. After this call the context
-    object is invalid and should not be used again.
-
-    @param context: the context object returned from authGSSClientInit.
-    @return: a result code (see above).
-    """
-
 def authGSSClientStep(context, challenge):
     """
     Processes a single GSSAPI client-side step using the supplied server data.
@@ -191,15 +182,6 @@ def authGSSServerInit(service):
         context is an opaque value that will need to be passed to subsequent functions.
     """
 
-def authGSSServerClean(context):
-    """
-    Destroys the context for GSSAPI server-side authentication. After this call the context
-    object is invalid and should not be used again.
-
-    @param context: the context object returned from authGSSServerInit.
-    @return: a result code (see above).
-    """
-
 def authGSSServerStep(context, challenge):
     """
     Processes a single GSSAPI server-side step using the supplied client data.
@@ -243,15 +225,6 @@ def authGSSStoreCredential(context):
 	@param context: the context object returned from authGSSServerInit.
 	@return: a tuple of (result, context) where result is the result code (see above) and
         context is an opaque value that will need to be passed to subsequent functions.
-    """
-
-def authGSSStorageClean(context):
-    """
-	Destroys the context for GSSAPI server-side credential storage. After this call the context
-    object is invalid and should not be used again.
-
-	@param context: the context object returned from authGSSStoreCredential.
-	@return: a result code (see above).
     """
 
 def authGSSStorageName(context):
