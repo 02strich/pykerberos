@@ -626,6 +626,7 @@ int authenticate_gss_server_init(const char *service, gss_server_state *state)
     state->username = NULL;
     state->targetname = NULL;
     state->response = NULL;
+    state->gss_flags = 0;
     
     // Server name may be empty which means we aren't going to create our own creds
     service_len = strlen(service);
@@ -733,7 +734,7 @@ int authenticate_gss_server_step(gss_server_state *state, const char *challenge)
                                       &state->client_name,
                                       NULL,
                                       &output_token,
-                                      NULL,
+                                      (OM_uint32 *)&state->gss_flags,
                                       NULL,
                                       &state->client_creds);
     Py_END_ALLOW_THREADS
