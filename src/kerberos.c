@@ -21,8 +21,24 @@
 #include "kerberosgss.h"
 #include "kerberoscache.h"
 
+/*
+ * Support the Python 3 API while maintaining backward compatibility for the
+ * Python 2 API.
+ * Thanks to Lennart Regebro for http://python3porting.com/cextensions.html
+ */
+// Handle basic API changes
 #if PY_MAJOR_VERSION >= 3
+    // Basic renames (function parameters are the same)
+    // No more int objects
     #define PyInt_FromLong PyLong_FromLong
+    // CObjects to Capsules
+    #define PyCObject_Check PyCapsule_CheckExact
+    // #define PyCObject_SetVoidPtr PyCapsule_SetPointer
+#else
+    // More complex macros (function parameters are not the same)
+    // Note for PyCObject_FromVoidPtr, destr is now the third parameter
+    #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
+    #define PyCapsule_GetPointer(pobj, NULL) PyCObject_AsVoidPtr(pobj)
 #endif
 
 PyObject *KrbException_class;
@@ -103,11 +119,7 @@ static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* key
         return NULL;
 
     state = (gss_client_state *) malloc(sizeof(gss_client_state));
-#if PY_MAJOR_VERSION >= 3
     pystate = PyCapsule_New(state, NULL, NULL);
-#else
-    pystate = PyCObject_FromVoidPtr(state, NULL);
-#endif
 
     result = authenticate_gss_client_init(service, principal, gss_flags, state);
     if (result == AUTH_GSS_ERROR)
@@ -125,20 +137,12 @@ static PyObject *authGSSClientClean(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state != NULL)
     {
         result = authenticate_gss_client_clean(state);
@@ -162,20 +166,12 @@ static PyObject *authGSSClientStep(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "Os", &pystate, &challenge))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -194,20 +190,12 @@ static PyObject *authGSSClientResponseConf(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -222,20 +210,12 @@ static PyObject *authGSSClientResponse(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -250,20 +230,12 @@ static PyObject *authGSSClientUserName(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -280,20 +252,12 @@ static PyObject *authGSSClientUnwrap(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "Os", &pystate, &challenge))
 		return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
 		PyErr_SetString(PyExc_TypeError, "Expected a context object");
 		return NULL;
 	}
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
 	if (state == NULL)
 		return NULL;
 
@@ -315,20 +279,12 @@ static PyObject *authGSSClientUnwrapIov(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "Os", &pystate, &challenge))
 		return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
 		PyErr_SetString(PyExc_TypeError, "Expected a context object");
 		return NULL;
 	}
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
 	if (state == NULL)
 		return NULL;
 
@@ -352,20 +308,12 @@ static PyObject *authGSSClientWrap(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "Os|zi", &pystate, &challenge, &user, &protect))
 		return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
 		PyErr_SetString(PyExc_TypeError, "Expected a context object");
 		return NULL;
 	}
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
 	if (state == NULL)
 		return NULL;
 
@@ -389,20 +337,12 @@ static PyObject *authGSSClientWrapIov(PyObject *self, PyObject *args)
         if (!PyArg_ParseTuple(args, "Os|i", &pystate, &challenge, &protect))
             return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
             PyErr_SetString(PyExc_TypeError, "Expected a context object");
             return NULL;
         }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_client_state *)PyCObject_AsVoidPtr(pystate);
-#endif
         if (state == NULL)
             return NULL;
 
@@ -425,11 +365,7 @@ static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
         return NULL;
 
     state = (gss_server_state *) malloc(sizeof(gss_server_state));
-#if PY_MAJOR_VERSION >= 3
     pystate = PyCapsule_New(state, NULL, NULL);
-#else
-    pystate = PyCObject_FromVoidPtr(state, NULL);
-#endif
 
     result = authenticate_gss_server_init(service, state);
     if (result == AUTH_GSS_ERROR)
@@ -447,20 +383,12 @@ static PyObject *authGSSServerClean(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state != NULL)
     {
         result = authenticate_gss_server_clean(state);
@@ -484,20 +412,12 @@ static PyObject *authGSSServerStep(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "Os", &pystate, &challenge))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -516,20 +436,12 @@ static PyObject *authGSSServerResponse(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -544,20 +456,12 @@ static PyObject *authGSSServerUserName(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -572,20 +476,12 @@ static PyObject *authGSSServerTargetName(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
 
@@ -603,20 +499,12 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
     
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
     
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_server_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state == NULL)
         return NULL;
     if (!(state->gss_flags & GSS_C_DELEG_FLAG))
@@ -626,11 +514,7 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
         return NULL;
     }
     storestate = (gss_store_state *) malloc(sizeof(gss_store_state));
-#if PY_MAJOR_VERSION >= 3
     pystorestate = PyCapsule_New(storestate, NULL, NULL);
-#else
-    pystorestate = PyCObject_FromVoidPtr(storestate, NULL);
-#endif
     
     result = authenticate_store_credential(storestate, state->username, state->client_creds);
     if (result == 0)
@@ -648,20 +532,12 @@ static PyObject *authGSSStorageClean(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_store_state *)PyCObject_AsVoidPtr(pystate);
-#endif
     if (state != NULL)
     {
         result = authenticate_store_clear(state);
@@ -683,19 +559,12 @@ static PyObject *authGSSStorageName(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &pystate))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
-    if (!PyCapsule_CheckExact(pystate)) {
-#else
-    if (!PyCObject_Check(pystate)) {
-#endif        
+    if (!PyCapsule_CheckExact(pystate)) {       
         PyErr_SetString(PyExc_TypeError, "Expected a context object");
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
-    state = PyCapsule_GetPointer(pystate, NULL);
-#else
-    state = (gss_store_state *)PyCObject_AsVoidPtr(pystate);
-#endif    
+    
+    state = PyCapsule_GetPointer(pystate, NULL);  
     if (state == NULL)
         return NULL;
     
