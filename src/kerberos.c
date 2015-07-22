@@ -15,6 +15,7 @@
  **/
 
 #include <Python.h>
+#include <stdio.h>
 
 #include "kerberosbasic.h"
 #include "kerberospw.h"
@@ -32,13 +33,13 @@
     // No more int objects
     #define PyInt_FromLong PyLong_FromLong
     // CObjects to Capsules
-    #define PyCObject_Check PyCapsule_CheckExact
+    // #define PyCObject_Check PyCapsule_CheckExact
     // #define PyCObject_SetVoidPtr PyCapsule_SetPointer
 #else
     // More complex macros (function parameters are not the same)
     // Note for PyCObject_FromVoidPtr, destr is now the third parameter
-    #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
-    #define PyCapsule_GetPointer(pobj, NULL) PyCObject_AsVoidPtr(pobj)
+    // #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
+    // #define PyCapsule_GetPointer(pobj, NULL) PyCObject_AsVoidPtr(pobj)
 #endif
 
 PyObject *KrbException_class;
@@ -105,6 +106,18 @@ static PyObject *getServerPrincipalDetails(PyObject *self, PyObject *args)
         return NULL;
 }
 
+void destruct_client(PyObject* o) 
+{
+    gss_client_state *state;
+    
+    state = PyCapsule_GetPointer(o, NULL);
+    if (state != NULL)
+    {
+        authenticate_gss_client_clean(state);
+        free(state);
+    }
+}
+
 static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* keywds)
 {
     const char *service = NULL;
@@ -119,13 +132,13 @@ static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* key
         return NULL;
 
     state = (gss_client_state *) malloc(sizeof(gss_client_state));
-    pystate = PyCapsule_New(state, NULL, NULL);
+    pystate = PyCapsule_New(state, NULL, &destruct_client);
 
     result = authenticate_gss_client_init(service, principal, gss_flags, state);
     if (result == AUTH_GSS_ERROR)
         return NULL;
 
-    return Py_BuildValue("(iO)", result, pystate);
+    return pystate;
 }
 
 static PyObject *authGSSClientClean(PyObject *self, PyObject *args)
@@ -354,6 +367,18 @@ static PyObject *authGSSClientWrapIov(PyObject *self, PyObject *args)
 }
 #endif
 
+void destruct_server(PyObject* o)
+{
+    gss_server_state *state;
+    
+    state = PyCapsule_GetPointer(o, NULL);
+    if (state != NULL)
+    {
+        authenticate_gss_server_clean(state);
+        free(state);
+    }
+}
+
 static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
 {
     const char *service = NULL;
@@ -365,13 +390,13 @@ static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
         return NULL;
 
     state = (gss_server_state *) malloc(sizeof(gss_server_state));
-    pystate = PyCapsule_New(state, NULL, NULL);
+    pystate = PyCapsule_New(state, NULL, &destruct_server);
 
     result = authenticate_gss_server_init(service, state);
     if (result == AUTH_GSS_ERROR)
         return NULL;
 
-    return Py_BuildValue("(iO)", result, pystate);
+    return pystate;
 }
 
 static PyObject *authGSSServerClean(PyObject *self, PyObject *args)
@@ -488,6 +513,18 @@ static PyObject *authGSSServerTargetName(PyObject *self, PyObject *args)
     return Py_BuildValue("s", state->targetname);
 }
 
+void destruct_storage(PyObject* o)
+{
+    gss_store_state *state;
+    
+    state = PyCapsule_GetPointer(o, NULL);
+    if (state != NULL)
+    {
+        authenticate_store_clear(state);
+        free(state);
+    }
+}
+
 static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
 {
     gss_server_state *state;
@@ -514,13 +551,13 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
         return NULL;
     }
     storestate = (gss_store_state *) malloc(sizeof(gss_store_state));
-    pystorestate = PyCapsule_New(storestate, NULL, NULL);
+    pystorestate = PyCapsule_New(storestate, NULL, &destruct_storage);
     
     result = authenticate_store_credential(storestate, state->username, state->client_creds);
     if (result == 0)
         return NULL;
         
-    return Py_BuildValue("(iO)", result, pystorestate);
+    return pystorestate;
 }
 
 static PyObject *authGSSStorageClean(PyObject *self, PyObject *args)
