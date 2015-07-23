@@ -15,7 +15,6 @@
  **/
 
 #include <Python.h>
-#include <stdio.h>
 
 #include "kerberosbasic.h"
 #include "kerberospw.h"
@@ -33,13 +32,13 @@
     // No more int objects
     #define PyInt_FromLong PyLong_FromLong
     // CObjects to Capsules
-    // #define PyCObject_Check PyCapsule_CheckExact
+    #define PyCObject_Check PyCapsule_CheckExact
     // #define PyCObject_SetVoidPtr PyCapsule_SetPointer
 #else
     // More complex macros (function parameters are not the same)
     // Note for PyCObject_FromVoidPtr, destr is now the third parameter
-    // #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
-    // #define PyCapsule_GetPointer(pobj, NULL) PyCObject_AsVoidPtr(pobj)
+    #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
+    #define PyCapsule_GetPointer(pobj, NULL) PyCObject_AsVoidPtr(pobj)
 #endif
 
 PyObject *KrbException_class;
@@ -138,7 +137,7 @@ static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* key
     if (result == AUTH_GSS_ERROR)
         return NULL;
 
-    return pystate;
+    return Py_BuildValue("(iN)", result, pystate);
 }
 
 static PyObject *authGSSClientStep(PyObject *self, PyObject *args)
@@ -368,7 +367,7 @@ static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
     if (result == AUTH_GSS_ERROR)
         return NULL;
 
-    return pystate;
+    return Py_BuildValue("(iN)", result, pystate);
 }
 
 static PyObject *authGSSServerStep(PyObject *self, PyObject *args)
@@ -501,7 +500,7 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
     if (result == 0)
         return NULL;
         
-    return pystorestate;
+    return Py_BuildValue("(iN)", result, pystorestate);
 }
 
 static PyObject *authGSSStorageName(PyObject *self, PyObject *args)
