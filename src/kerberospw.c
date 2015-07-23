@@ -111,14 +111,24 @@ int change_user_krb5pwd(const char *user, const char* oldpswd, const char *newps
     }
     if (result_code) {
         char *message = NULL;
-        asprintf(&message, "%.*s: %.*s",
+        const char* def_error = "asprintf return -1";
+        int success = -1;
+        success = asprintf(&message, "%.*s: %.*s",
                  (int) result_code_string.length,
                  (char *) result_code_string.data,
                  (int) result_string.length,
                  (char *) result_string.data);
-        PyErr_SetObject(PwdChangeException_class, Py_BuildValue("((s:i))",
-                                                                message, result_code));
-        free(message);
+        if (success != -1)
+        {
+            PyErr_SetObject(PwdChangeException_class, 
+                Py_BuildValue("((s:i))", message, result_code));
+            free(message);
+        }
+        else 
+        {
+            PyErr_SetObject(PwdChangeException_class, 
+                Py_BuildValue("((s:i))", def_error, result_code));
+        }
         goto end;
     }
 

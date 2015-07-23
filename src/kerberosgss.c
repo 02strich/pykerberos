@@ -186,11 +186,20 @@ int authenticate_gss_client_clean(gss_client_state *state)
     int ret = AUTH_GSS_COMPLETE;
     
     if (state->context != GSS_C_NO_CONTEXT)
+    {
         maj_stat = gss_delete_sec_context(&min_stat, &state->context, GSS_C_NO_BUFFER);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->server_name != GSS_C_NO_NAME)
+    {
         maj_stat = gss_release_name(&min_stat, &state->server_name);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->client_creds != GSS_C_NO_CREDENTIAL)
+    {
         maj_stat = gss_release_cred(&min_stat, &state->client_creds);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->username != NULL)
     {
         free(state->username);
@@ -536,7 +545,10 @@ int authenticate_gss_client_wrap(gss_client_state* state, const char* challenge,
 	gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
 	gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
 	int ret = AUTH_GSS_CONTINUE;
-	char buf[4096], server_conf_flags;
+	char buf[4096];
+#ifdef PRINTFS
+    char server_conf_flags;
+#endif
 	unsigned long buf_size;
     
 	// Always clear out the old response
@@ -554,8 +566,10 @@ int authenticate_gss_client_wrap(gss_client_state* state, const char* challenge,
 	}
     
 	if (user) {
+#ifdef PRINTFS
 		// get bufsize
 		server_conf_flags = ((char*) input_token.value)[0];
+#endif
 		((char*) input_token.value)[0] = 0;
 		buf_size = ntohl(*((long *) input_token.value));
 		free(input_token.value);
@@ -668,15 +682,30 @@ int authenticate_gss_server_clean(gss_server_state *state)
     int ret = AUTH_GSS_COMPLETE;
     
     if (state->context != GSS_C_NO_CONTEXT)
+    {
         maj_stat = gss_delete_sec_context(&min_stat, &state->context, GSS_C_NO_BUFFER);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->server_name != GSS_C_NO_NAME)
+    {
         maj_stat = gss_release_name(&min_stat, &state->server_name);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->client_name != GSS_C_NO_NAME)
+    {
         maj_stat = gss_release_name(&min_stat, &state->client_name);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->server_creds != GSS_C_NO_CREDENTIAL)
+    {
         maj_stat = gss_release_cred(&min_stat, &state->server_creds);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->client_creds != GSS_C_NO_CREDENTIAL)
+    {
         maj_stat = gss_release_cred(&min_stat, &state->client_creds);
+        if (GSS_ERROR(maj_stat)) ret = AUTH_GSS_ERROR;
+    }
     if (state->username != NULL)
     {
         free(state->username);
