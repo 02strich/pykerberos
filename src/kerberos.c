@@ -30,11 +30,11 @@
 #if PY_MAJOR_VERSION >= 3
     // Basic renames (function parameters are the same)
     // No more int objects
-    #define PyInt_FromLong PyLong_FromLong
-    // CObjects to Capsules
-    #define PyCObject_Check PyCapsule_CheckExact
+    #define PyInt_FromLong PyLong_FromLong    
     // #define PyCObject_SetVoidPtr PyCapsule_SetPointer
 #else
+    // CObjects to Capsules
+    #define PyCapsule_CheckExact PyCObject_Check
     // More complex macros (function parameters are not the same)
     // Note for PyCObject_FromVoidPtr, destr is now the third parameter
     #define PyCapsule_New(cobj, NULL, destr) PyCObject_FromVoidPtr(cobj, destr)
@@ -105,6 +105,8 @@ static PyObject *getServerPrincipalDetails(PyObject *self, PyObject *args)
         return NULL;
 }
 
+// Different API for destructors
+#if PY_MAJOR_VERSION >= 3
 void destruct_client(PyObject* o) 
 {
     gss_client_state *state;
@@ -116,6 +118,19 @@ void destruct_client(PyObject* o)
         free(state);
     }
 }
+#else
+void destruct_client(void* o) 
+{
+    gss_client_state *state;
+    
+    state = (gss_client_state *)o;
+    if (state != NULL)
+    {
+        authenticate_gss_client_clean(state);
+        free(state);
+    }
+}
+#endif
 
 static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* keywds)
 {
@@ -338,6 +353,8 @@ static PyObject *authGSSClientWrapIov(PyObject *self, PyObject *args)
 }
 #endif
 
+// Different API for destructors
+#if PY_MAJOR_VERSION >= 3
 void destruct_server(PyObject* o)
 {
     gss_server_state *state;
@@ -349,6 +366,19 @@ void destruct_server(PyObject* o)
         free(state);
     }
 }
+#else
+void destruct_server(void* o)
+{
+    gss_server_state *state;
+    
+    state = (gss_server_state *)o;
+    if (state != NULL)
+    {
+        authenticate_gss_server_clean(state);
+        free(state);
+    }
+}
+#endif
 
 static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
 {
@@ -456,6 +486,8 @@ static PyObject *authGSSServerTargetName(PyObject *self, PyObject *args)
     return Py_BuildValue("s", state->targetname);
 }
 
+// Different API for destructors
+#if PY_MAJOR_VERSION >= 3
 void destruct_storage(PyObject* o)
 {
     gss_store_state *state;
@@ -467,6 +499,19 @@ void destruct_storage(PyObject* o)
         free(state);
     }
 }
+#else
+void destruct_storage(void* o)
+{
+    gss_store_state *state;
+    
+    state = (gss_store_state *)o;
+    if (state != NULL)
+    {
+        authenticate_store_clear(state);
+        free(state);
+    }
+}
+#endif
 
 static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
 {
