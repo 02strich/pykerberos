@@ -68,22 +68,28 @@ store_gss_creds(gss_store_state *state, char *princ_name, gss_cred_id_t delegate
 {
    OM_uint32        maj_stat, min_stat;
    krb5_error_code  problem;
-   const char *     temp_ccname = "FILE:/tmp/krb5cc_";
+   const char *     temp_ccname = "FILE:/tmp/krb5cc_pykerberos_XXXXXX";
    int              ret = 1;
 
    problem = krb5_init_context(&state->context);
-   if (problem) {      
+   if (problem) {
        PyErr_SetObject(BasicAuthException_class, Py_BuildValue("((s:i))",
                                                                 "Cannot initialize Kerberos5 context", problem));
        return 0;
    }
    
-   int lenp = strlen(princ_name);
-   int lent = strlen(temp_ccname);
-   state->ccache_name = (char *) malloc(lenp+lent+1);
-   state->ccache_name[lenp+lent] = 0;
+   int name_len = strlen(temp_ccname);
+   state->ccache_name = (char *)malloc(name_len + 1);
    strcpy(state->ccache_name, temp_ccname);
-   strcat(state->ccache_name, princ_name); 
+   int fd = mkstemp(state->ccache_name + strlen("FILE:"));
+   if (fd < 0)
+   {
+       PyErr_SetObject(BasicAuthException_class, 
+                       Py_BuildValue("(s:s)", "Error in mkstemp", strerror(errno)));
+       ret = 0;
+       goto end;
+   }
+   close(fd);
 
    problem = krb5_cc_resolve(state->context, state->ccache_name, &state->ccache);
    if (problem) {
