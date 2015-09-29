@@ -14,8 +14,8 @@
  * limitations under the License.
  **/
 
+#include <krb5.h>
 #include <gssapi/gssapi.h>
-#include <gssapi/gssapi_generic.h>
 #include <gssapi/gssapi_krb5.h>
 #ifdef GSSAPI_EXT
   #include <gssapi/gssapi_ext.h>
