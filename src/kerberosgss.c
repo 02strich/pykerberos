@@ -38,7 +38,8 @@ char* server_principal_details(const char* service, const char* hostname)
     int code;
     krb5_context kcontext;
     krb5_keytab kt = NULL;
-    krb5_kt_cursor cursor = NULL;
+    krb5_kt_cursor cursor;
+    int seq_get_started = 0;
     krb5_keytab_entry entry;
     char* pname = NULL;
     
@@ -68,6 +69,7 @@ char* server_principal_details(const char* service, const char* hostname)
         goto end;
     }
     
+    seq_get_started = 1;
     while ((code = krb5_kt_next_entry(kcontext, kt, &entry, &cursor)) == 0)
     {
         if ((code = krb5_unparse_name(kcontext, entry.principal, &pname)))
@@ -97,7 +99,7 @@ char* server_principal_details(const char* service, const char* hostname)
     }
     
 end:
-    if (cursor)
+    if (seq_get_started)
         krb5_kt_end_seq_get(kcontext, kt, &cursor);
     if (kt)
         krb5_kt_close(kcontext, kt);
@@ -130,7 +132,7 @@ int authenticate_gss_client_init(const char* service, const char* principal, lon
     if (strchr(service, '/'))
         mech = GSS_C_NO_OID;
     else
-        mech = gss_krb5_nt_service_name;
+        mech = GSS_KRB5_NT_PRINCIPAL_NAME;
 
     maj_stat = gss_import_name(&min_stat, &name_token, mech, &state->server_name);
     
