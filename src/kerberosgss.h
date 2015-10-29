@@ -49,6 +49,7 @@ typedef struct {
     char*            username;
     char*            targetname;
     char*            response;
+	long int         gss_flags;
 } gss_server_state;
 
 char* server_principal_details(const char* service, const char* hostname);

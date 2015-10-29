@@ -77,6 +77,7 @@ setup (
                 "src/kerberosbasic.c",
                 "src/kerberosgss.c",
                 "src/kerberospw.c",
+                "src/kerberoscache.c",
                 "src/base64.c"
             ],
         ),

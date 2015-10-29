@@ -234,3 +234,30 @@ def authGSSServerTargetName(context):
     @param context: the context object returned from authGSSServerInit.
     @return: a string containing the target name.
     """
+
+def authGSSStoreCredential(context):
+    """
+    Initializes a context for GSSAPI server-side credential storage with client's credential.
+	Store delegated client credential	
+
+	@param context: the context object returned from authGSSServerInit.
+	@return: a tuple of (result, context) where result is the result code (see above) and
+        context is an opaque value that will need to be passed to subsequent functions.
+    """
+
+def authGSSStorageClean(context):
+    """
+	Destroys the context for GSSAPI server-side credential storage. After this call the context
+    object is invalid and should not be used again.
+
+	@param context: the context object returned from authGSSStoreCredential.
+	@return: a result code (see above).
+    """
+
+def authGSSStorageName(context):
+    """
+	Get credential cache name
+
+	@param context: the context object returned from authGSSStoreCredential.
+	@return: a string containing the credential cache name.
+    """
