@@ -157,30 +157,9 @@ static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* key
 
 static PyObject *authGSSClientClean(PyObject *self, PyObject *args)
 {
-    gss_client_state *state;
-    PyObject *pystate;
-    int result = 0;
-
-    if (!PyArg_ParseTuple(args, "O", &pystate))
-        return NULL;
-
-    if (!PyCapsule_CheckExact(pystate)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a context object");
-        return NULL;
-    }
-
-    state = PyCapsule_GetPointer(pystate, NULL);
-    if (state != NULL)
-    {
-        result = authenticate_gss_client_clean(state);
-
-        free(state);
-#if PY_MAJOR_VERSION < 3
-        PyCObject_SetVoidPtr(pystate, NULL);
-#endif
-    }
-
-    return Py_BuildValue("i", result);
+    PyErr_WarnEx(PyExc_RuntimeError,
+        "kerberos.authGSSClientClean is deprecated.", 2);
+    return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
 static PyObject *authGSSClientStep(PyObject *self, PyObject *args)
@@ -430,30 +409,9 @@ static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
 
 static PyObject *authGSSServerClean(PyObject *self, PyObject *args)
 {
-    gss_server_state *state;
-    PyObject *pystate;
-    int result = 0;
-
-    if (!PyArg_ParseTuple(args, "O", &pystate))
-        return NULL;
-
-    if (!PyCapsule_CheckExact(pystate)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a context object");
-        return NULL;
-    }
-
-    state = PyCapsule_GetPointer(pystate, NULL);
-    if (state != NULL)
-    {
-        result = authenticate_gss_server_clean(state);
-
-        free(state);
-#if PY_MAJOR_VERSION < 3
-        PyCObject_SetVoidPtr(pystate, NULL);
-#endif
-    }
-
-    return Py_BuildValue("i", result);
+    PyErr_WarnEx(PyExc_RuntimeError,
+        "kerberos.authGSSServerClean is deprecated.", 2);
+    return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
 static PyObject *authGSSServerStep(PyObject *self, PyObject *args)
@@ -606,30 +564,9 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
 
 static PyObject *authGSSStorageClean(PyObject *self, PyObject *args)
 {
-    gss_store_state *state;
-    PyObject *pystate;
-    int result = 0;
-
-    if (!PyArg_ParseTuple(args, "O", &pystate))
-        return NULL;
-
-    if (!PyCapsule_CheckExact(pystate)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a context object");
-        return NULL;
-    }
-
-    state = PyCapsule_GetPointer(pystate, NULL);
-    if (state != NULL)
-    {
-        result = authenticate_store_clear(state);
-
-        free(state);
-#if PY_MAJOR_VERSION < 3
-        PyCObject_SetVoidPtr(pystate, NULL);
-#endif
-    }
-
-    return Py_BuildValue("i", result);
+    PyErr_WarnEx(PyExc_RuntimeError,
+        "kerberos.authGSSStorageClean is deprecated.", 2);
+    return Py_BuildValue("i", AUTH_GSS_COMPLETE);
 }
 
 static PyObject *authGSSStorageName(PyObject *self, PyObject *args)
