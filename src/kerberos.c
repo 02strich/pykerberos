@@ -155,6 +155,34 @@ static PyObject* authGSSClientInit(PyObject* self, PyObject* args, PyObject* key
     return Py_BuildValue("(iN)", result, pystate);
 }
 
+static PyObject *authGSSClientClean(PyObject *self, PyObject *args)
+{
+    gss_client_state *state;
+    PyObject *pystate;
+    int result = 0;
+
+    if (!PyArg_ParseTuple(args, "O", &pystate))
+        return NULL;
+
+    if (!PyCapsule_CheckExact(pystate)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
+
+    state = PyCapsule_GetPointer(pystate, NULL);
+    if (state != NULL)
+    {
+        result = authenticate_gss_client_clean(state);
+
+        free(state);
+#if PY_MAJOR_VERSION < 3
+        PyCObject_SetVoidPtr(pystate, NULL);
+#endif
+    }
+
+    return Py_BuildValue("i", result);
+}
+
 static PyObject *authGSSClientStep(PyObject *self, PyObject *args)
 {
     gss_client_state *state;
@@ -400,6 +428,34 @@ static PyObject *authGSSServerInit(PyObject *self, PyObject *args)
     return Py_BuildValue("(iN)", result, pystate);
 }
 
+static PyObject *authGSSServerClean(PyObject *self, PyObject *args)
+{
+    gss_server_state *state;
+    PyObject *pystate;
+    int result = 0;
+
+    if (!PyArg_ParseTuple(args, "O", &pystate))
+        return NULL;
+
+    if (!PyCapsule_CheckExact(pystate)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
+
+    state = PyCapsule_GetPointer(pystate, NULL);
+    if (state != NULL)
+    {
+        result = authenticate_gss_server_clean(state);
+
+        free(state);
+#if PY_MAJOR_VERSION < 3
+        PyCObject_SetVoidPtr(pystate, NULL);
+#endif
+    }
+
+    return Py_BuildValue("i", result);
+}
+
 static PyObject *authGSSServerStep(PyObject *self, PyObject *args)
 {
     gss_server_state *state;
@@ -548,6 +604,34 @@ static PyObject *authGSSStoreCredential(PyObject *self, PyObject *args)
     return Py_BuildValue("(iN)", result, pystorestate);
 }
 
+static PyObject *authGSSStorageClean(PyObject *self, PyObject *args)
+{
+    gss_store_state *state;
+    PyObject *pystate;
+    int result = 0;
+
+    if (!PyArg_ParseTuple(args, "O", &pystate))
+        return NULL;
+
+    if (!PyCapsule_CheckExact(pystate)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a context object");
+        return NULL;
+    }
+
+    state = PyCapsule_GetPointer(pystate, NULL);
+    if (state != NULL)
+    {
+        result = authenticate_store_clear(state);
+
+        free(state);
+#if PY_MAJOR_VERSION < 3
+        PyCObject_SetVoidPtr(pystate, NULL);
+#endif
+    }
+
+    return Py_BuildValue("i", result);
+}
+
 static PyObject *authGSSStorageName(PyObject *self, PyObject *args)
 {
     gss_store_state *state;
@@ -576,6 +660,8 @@ static PyMethodDef KerberosMethods[] = {
      "Return the service principal for a given service and hostname."},
     {"authGSSClientInit",  (PyCFunction)authGSSClientInit, METH_VARARGS | METH_KEYWORDS,
      "Initialize client-side GSSAPI operations."},
+    {"authGSSClientClean",  authGSSClientClean, METH_VARARGS,
+     "Terminate client-side GSSAPI operations."},
     {"authGSSClientStep",  authGSSClientStep, METH_VARARGS,
      "Do a client-side GSSAPI step."},
     {"authGSSClientResponse",  authGSSClientResponse, METH_VARARGS,
@@ -596,6 +682,8 @@ static PyMethodDef KerberosMethods[] = {
     {"authGSSClientUnwrapIov",  authGSSClientUnwrapIov, METH_VARARGS,
      "Do a GSSAPI iov unwrap."},
 #endif
+    {"authGSSServerClean",  authGSSServerClean, METH_VARARGS,
+     "Terminate server-side GSSAPI operations."},
     {"authGSSServerStep",  authGSSServerStep, METH_VARARGS,
      "Do a server-side GSSAPI step."},
     {"authGSSServerResponse",  authGSSServerResponse, METH_VARARGS,
@@ -605,6 +693,8 @@ static PyMethodDef KerberosMethods[] = {
     {"authGSSServerTargetName",  authGSSServerTargetName, METH_VARARGS,
         "Get the target name from the last server-side GSSAPI step."},
     {"authGSSStoreCredential",  authGSSStoreCredential, METH_VARARGS,
+        "Get the target name from the last server-side GSSAPI step."},
+    {"authGSSStorageClean",  authGSSStorageClean, METH_VARARGS,
         "Get the target name from the last server-side GSSAPI step."},
     {"authGSSStorageName",  authGSSStorageName, METH_VARARGS,
         "Get the target name from the last server-side GSSAPI step."},        
