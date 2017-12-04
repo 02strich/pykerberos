@@ -62,6 +62,7 @@ setup (
     description = "High-level interface to Kerberos",
     long_description=long_description,
     license="ASL 2.0",
+    zip_safe=False,
     classifiers = [
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 2",
