@@ -873,9 +873,10 @@ int encrypt_message(gss_client_state *state, char *message_input, char **header,
     *encrypted_data_len = iov[1].buffer.length + iov[2].buffer.length;
     *encrypted_data = malloc(*encrypted_data_len);
     outloc = *encrypted_data;
-    outloc = mempcpy(outloc, iov[1].buffer.value, iov[1].buffer.length);
+    memcpy(outloc, iov[1].buffer.value, iov[1].buffer.length);
+    outloc += iov[1].buffer.length;
     // NB: no-op if no padding is necessary (which seems to always be the case with aes256-cts-hmac-sha1-96)
-    mempcpy(outloc, iov[2].buffer.value, iov[2].buffer.length);
+    memcpy(outloc, iov[2].buffer.value, iov[2].buffer.length);
 
     ret = 0;
 end:
